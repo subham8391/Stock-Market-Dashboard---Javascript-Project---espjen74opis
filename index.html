@@ -1,1 +1,37 @@
-
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Market Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="stc-header">Stock Market Dashboard</h1>
+        <div class="ser-to-sec">
+            <div class="sear-sec">
+                <div class="search-bar">
+                    <input type="text" id="stock-symbol" placeholder="Enter stock symbol">
+                    <button class="sear-icon" onclick="searchStock()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+            </div>
+            <div class="time-options">
+                <button class="time-btn active" data-time="INTRADAY" onclick="changeTimeOption('INTRADAY')">Intraday</button>
+                <button class="time-btn" data-time="DAILY" onclick="changeTimeOption('DAILY')">Daily</button>
+                <button class="time-btn" data-time="WEEKLY" onclick="changeTimeOption('WEEKLY')">Weekly</button>
+                <button class="time-btn" data-time="MONTHLY" onclick="changeTimeOption('MONTHLY')">Monthly</button>
+            </div>
+        </div>
+        <h1 class="wal-header">Your Watch-List</h1>
+        <div class="watchlist-container" id="watchlist">
+            <!-- Stock cards will be added here dynamically -->
+        </div>
+    </div>
+    <div class="modal" id="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>Stock Details</h3>
+        <div id="stock-details"></div>
+    </div>
+    <script src="App.js"></script>
+</body>
+</html>
