@@ -17,7 +17,13 @@ function changeTimeOption(timeOption) {
 // Function to fetch stock data using Alpha Vantage API
 function fetchStockData(symbol, timeOption) {
     const apiKey = 'D6ORM58WV1W77LHI';
-    const apiUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_${timeOption}&symbol=${symbol}&apikey=${apiKey}`;
+    let apiUrl;
+
+    if (timeOption === 'INTRADAY') {
+        apiUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${apiKey}`;
+    } else {
+        apiUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_${timeOption}&symbol=${symbol}&apikey=${apiKey}`;
+    }
 
     fetch(apiUrl)
         .then(response => response.json())
@@ -30,77 +36,43 @@ function fetchStockData(symbol, timeOption) {
 function addToWatchlist(data, symbol, timeOption) {
     const watchlistContainer = document.getElementById('watchlist');
 
-    let lastStockPrice, otherStockDetails;
-    if (timeOption === 'INTRADAY') {
-        // For Intraday data, extract the latest stock price and other relevant information
-        const latestData = data['Time Series (5min)'][Object.keys(data['Time Series (5min)'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
-            Open: ${latestData['1. open']}
-            High: ${latestData['2. high']}
-            Low: ${latestData['3. low']}
-            Close: ${latestData['4. close']}
-            Volume: ${latestData['5. volume']}
-        `;
-    } else if (timeOption === 'DAILY') {
-        // For Daily data, extract the latest stock price and other relevant information
-        const latestData = data['Time Series (Daily)'][Object.keys(data['Time Series (Daily)'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
-            Open: ${latestData['1. open']}
-            High: ${latestData['2. high']}
-            Low: ${latestData['3. low']}
-            Close: ${latestData['4. close']}
-            Volume: ${latestData['5. volume']}
-        `;
-    } else if (timeOption === 'WEEKLY') {
-        // For Weekly data, extract the latest stock price and other relevant information
-        const latestData = data['Weekly Time Series'][Object.keys(data['Weekly Time Series'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
-            Open: ${latestData['1. open']}
-            High: ${latestData['2. high']}
-            Low: ${latestData['3. low']}
-            Close: ${latestData['4. close']}
-            Volume: ${latestData['5. volume']}
-        `;
-    } else if (timeOption === 'MONTHLY') {
-        // For Monthly data, extract the latest stock price and other relevant information
-        const latestData = data['Monthly Time Series'][Object.keys(data['Monthly Time Series'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
-            Open: ${latestData['1. open']}
-            High: ${latestData['2. high']}
-            Low: ${latestData['3. low']}
-            Close: ${latestData['4. close']}
-            Volume: ${latestData['5. volume']}
-        `;
-    }
-    
-    // ... existing code to extract relevant data ...
+    // Extract relevant data based on the selected time frame
+    const timeSeriesKey = getTimeSeriesKey(timeOption);
+    const stockData = data[timeSeriesKey];
 
     const stockCard = document.createElement('div');
     const uniqueId = `${symbol}_${timeOption}`; // Unique identifier for each stock card
     stockCard.classList.add('stock-card');
     stockCard.setAttribute('data-id', uniqueId); // Set unique identifier as a data attribute
+
+    const lastStockPrice = stockData[Object.keys(stockData)[0]]['4. close'];
+
     stockCard.innerHTML = `
-    <div>
-        <h3>${symbol}</h3>
-        <p>Time Frame: ${timeOption}</p>
-        <p>Last Stock Price: ${lastStockPrice}</p>
-        <p>Other Details: ${otherStockDetails}</p>
-    <div/>
-    <div>
-        <button onclick="showStockDetails('${symbol}', '${timeOption}')">View Details</button>
-        <button onclick="addToWishlist('${symbol}', '${timeOption}')">Add to Wishlist</button> <!-- Add "Add to Wishlist" button -->
-        <button onclick="removeStock('${symbol}')">Delete</button>
+        <div class="stock-info">
+            <div>${symbol}</div>
+            <div>${lastStockPrice}</div>
+            <div>${timeOption}</div>
+            <button onclick="showStockDetails('${symbol}', '${timeOption}')">View Details</button>
+            <button onclick="removeStock('${symbol}')">Delete</button>
         </div>
     `;
 
     watchlistContainer.appendChild(stockCard);
 }
 
-// Function to add stock details to local storage
+function getTimeSeriesKey(timeOption) {
+    if (timeOption === 'INTRADAY') {
+        return 'Time Series (5min)';
+    } else if (timeOption === 'DAILY') {
+        return 'Time Series (Daily)';
+    } else if (timeOption === 'WEEKLY') {
+        return 'Weekly Time Series';
+    } else if (timeOption === 'MONTHLY') {
+        return 'Monthly Time Series';
+    }
+    return null;
+}
+
 function addToWishlist(symbol, timeOption) {
     const uniqueId = `${symbol}_${timeOption}`;
     const stockDetails = {
@@ -120,13 +92,20 @@ function addToWishlist(symbol, timeOption) {
     localStorage.setItem('stockWishlist', JSON.stringify(existingData));
 }
 
-// Function to remove stock details from local storage
 function removeFromWishlist(uniqueId) {
     let existingData = localStorage.getItem('stockWishlist');
     if (existingData) {
-        existingData = JSON.parse(existingData);
-        delete existingData[uniqueId];
-        localStorage.setItem('stockWishlist', JSON.stringify(existingData));
+        let parsData = JSON.parse(existingData);
+        for( let keys in parsData){
+            if(parsData[keys].symbol === uniqueId){
+                delete parsData[keys];
+            localStorage.setItem('stockWishlist', JSON.stringify(parsData));
+            }
+            else {
+                   console.log('Item not found:', uniqueId);
+            }
+            
+        }
     }
 }
 
@@ -152,68 +131,46 @@ function showStockDetails(symbol, timeOption) {
     const stockDetailsElement = document.getElementById('stock-details');
 
     // Extract relevant data based on the selected time frame
-    let lastStockPrice, otherStockDetails;
-    if (timeOption === 'INTRADAY') {
-        // For Intraday data, extract the latest stock price and other relevant information
-        const latestData = fetchedData['Time Series (5min)'][Object.keys(fetchedData['Time Series (5min)'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
-          <tr>
-            <td>Open: ${latestData['1. open']}</td>
-            <td>High: ${latestData['2. high']}</td>
-            <td>Low: ${latestData['3. low']}</td>
-            <td>Close: ${latestData['4. close']}</td>
-            <td>Volume: ${latestData['5. volume']}</td>
-          </tr>
-        `;
-    } else if (timeOption === 'DAILY') {
-        // For Daily data, extract the latest stock price and other relevant information
-        const latestData = fetchedData['Time Series (Daily)'][Object.keys(fetchedData['Time Series (Daily)'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
-        <tr>
-            <td>Open: ${latestData['1. open']}</td>
-            <td>High: ${latestData['2. high']}</td>
-            <td>Low: ${latestData['3. low']}</td>
-            <td>Close: ${latestData['4. close']}</td>
-            <td>Volume: ${latestData['5. volume']}</td>
-        </tr>
-        `;
-    } else if (timeOption === 'WEEKLY') {
-        // For Weekly data, extract the latest stock price and other relevant information
-        const latestData = fetchedData['Weekly Time Series'][Object.keys(fetchedData['Weekly Time Series'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
-          <tr>
-            <td>Open: ${latestData['1. open']}</td>
-            <td>High: ${latestData['2. high']}</td>
-            <td>Low: ${latestData['3. low']}</td>
-            <td>Close: ${latestData['4. close']}</td>
-            <td>Volume: ${latestData['5. volume']}</td>
-          </tr>
-        `;
-    } else if (timeOption === 'MONTHLY') {
-        // For Monthly data, extract the latest stock price and other relevant information
-        const latestData = fetchedData['Monthly Time Series'][Object.keys(fetchedData['Monthly Time Series'])[0]];
-        lastStockPrice = latestData['4. close'];
-        otherStockDetails = `
+    const timeSeriesKey = getTimeSeriesKey(timeOption);
+    const latestData = fetchedData[timeSeriesKey][Object.keys(fetchedData[timeSeriesKey])[0]];
+
+    const lastStockPrice = latestData['4. close'];
+    let otherStockDetails = '<tr><th>Date</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th></tr>';
+    
+    let rowCounter = 0;
+    for (const date in fetchedData[timeSeriesKey]) {
+        if (rowCounter >= 5) {
+            break; // Display only 5 rows
+        }
+
+        const rowData = fetchedData[timeSeriesKey][date];
+        const { '1. open': open, '2. high': high, '3. low': low, '4. close': close, '5. volume': volume } = rowData;
+
+        otherStockDetails += `
             <tr>
-                <td>Open: ${latestData['1. open']}</td>
-                <td>High: ${latestData['2. high']}</td>
-                <td>Low: ${latestData['3. low']}</td>
-                <td>Close: ${latestData['4. close']}</td>
-                <td>Volume: ${latestData['5. volume']}</td>
+                <td>${date}</td>
+                <td>${open}</td>
+                <td>${high}</td>
+                <td>${low}</td>
+                <td>${close}</td>
+                <td>${volume}</td>
             </tr>
         `;
+
+        rowCounter++;
     }
-    const stockDetails =document.createElement('div');
+
+    const stockDetails = document.createElement('div');
     stockDetails.classList.add('stock-details');
     stockDetails.innerHTML = `
-    <h1>Stock Symbol: ${symbol}</h1>
-    <h2>Time Frame: ${timeOption}</h2>
-    <h2>Last Stock Price: ${lastStockPrice}</h2>
-    <div>Other Details:
-    ${otherStockDetails}</div>
+        <h1>Stock Symbol: ${symbol}</h1>
+        <h2>Time Frame: ${timeOption}</h2>
+        <h2>Last Stock Price: ${lastStockPrice}</h2>
+        <div>Other Details:
+            <table>${otherStockDetails}</table>
+        </div>
+        <button onclick="addToWishlist('${symbol}', '${timeOption}')">Add to Wishlist</button> <!-- Add Add to Wishlist button -->
+
     `;
 
     stockDetailsElement.appendChild(stockDetails);
@@ -230,7 +187,7 @@ function closeModal() {
 function removeStock(symbol) {
     const watchlistContainer = document.getElementById('watchlist');
     const stockCards = watchlistContainer.getElementsByClassName('stock-card');
-
+    removeFromWishlist(symbol);
     for (let card of stockCards) {
         if (card.getElementsByTagName('h3')[0].innerText === symbol) {
             card.remove();
