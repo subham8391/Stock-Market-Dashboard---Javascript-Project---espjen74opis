@@ -4,6 +4,7 @@
     <title>Stock Market Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -28,9 +29,14 @@
         </div>
     </div>
     <div class="modal" id="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h3>Stock Details</h3>
-        <div id="stock-details"></div>
+        <div class="close-btn">
+          <button class="close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="view-stocks" id="stock-details">
+           
+            
+            <!-- show tock details -->
+        </div>
     </div>
     <script src="App.js"></script>
 </body>

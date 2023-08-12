@@ -28,8 +28,13 @@ function fetchStockData(symbol, timeOption) {
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
+            if(data['Error Message']){
+                alert(`Stock symbol "${symbol}" not found. Please enter a valid symbol.`);
+            }
+            else{
             fetchedData = data;
             addToWatchlist(data, symbol, timeOption);
+            }
         })
         .catch(error => console.error('Error fetching data:', error));
 }
@@ -48,12 +53,12 @@ function addToWatchlist(data, symbol, timeOption) {
     const lastStockPrice = stockData[Object.keys(stockData)[0]]['4. close'];
 
     stockCard.innerHTML = `
-        <div class="stock-info">
-            <div>${symbol}</div>
-            <div>${lastStockPrice}</div>
-            <div>${timeOption}</div>
-            <button onclick="showStockDetails('${symbol}', '${timeOption}')">View Details</button>
-            <button onclick="removeStock('${symbol}')">Delete</button>
+        <div class="stockInfo">
+            <h3 class="sym">${symbol}</h3>
+            <span class="lsp">${lastStockPrice}</span>
+            <span class="to">${timeOption}</span>
+            <a onclick="showStockDetails('${symbol}', '${timeOption}')"><i class="fa-solid fa-file-contract"></i></a>
+            <a onclick="removeStock('${symbol}')"><i class="fa-solid fa-trash-can"></i></a>
         </div>
     `;
 
@@ -87,11 +92,16 @@ function addToWishlist(symbol, timeOption) {
     } else {
         existingData = JSON.parse(existingData);
     }
-
-    existingData[uniqueId] = stockDetails;
-    localStorage.setItem('stockWishlist', JSON.stringify(existingData));
+    if(existingData[uniqueId]){
+        alert('Stock is already in the wishlist.');
+    } 
+    else{
+        existingData[uniqueId] = stockDetails;
+        localStorage.setItem('stockWishlist', JSON.stringify(existingData));
+        alert('Stock has been added to the wishlist.');
+    }
 }
-
+//remove from local storage
 function removeFromWishlist(uniqueId) {
     let existingData = localStorage.getItem('stockWishlist');
     if (existingData) {
@@ -163,14 +173,21 @@ function showStockDetails(symbol, timeOption) {
     const stockDetails = document.createElement('div');
     stockDetails.classList.add('stock-details');
     stockDetails.innerHTML = `
-        <h1>Stock Symbol: ${symbol}</h1>
-        <h2>Time Frame: ${timeOption}</h2>
-        <h2>Last Stock Price: ${lastStockPrice}</h2>
-        <div>Other Details:
-            <table>${otherStockDetails}</table>
+    <div class="show-stocks">
+        
+        <div class="stoc-headder">
+        <span class="sym-sd">${symbol}</span>
+        <span class="lsp-sd">${lastStockPrice}</span>
+        <span class="to-sd">${timeOption}</span>
+        
         </div>
+        <div class="stoc-Other">
+            <table class="data-table">${otherStockDetails}</table>
+        </div>
+        <div class="stoc-btn">
         <button onclick="addToWishlist('${symbol}', '${timeOption}')">Add to Wishlist</button> <!-- Add Add to Wishlist button -->
-
+        </div>
+    </div>
     `;
 
     stockDetailsElement.appendChild(stockDetails);
@@ -181,6 +198,7 @@ function showStockDetails(symbol, timeOption) {
 function closeModal() {
     const modal = document.getElementById('modal');
     modal.style.display = 'none';
+    location.reload();
 }
 
 // Function to remove stock from the watchlist
@@ -198,8 +216,11 @@ function removeStock(symbol) {
 
 // Function to handle the search button click
 function searchStock() {
-    const symbol = document.getElementById('stock-symbol').value;
+    const symbol = document.getElementById('stock-symbol').value.trim();
     const timeOption = selectedTimeOption;
-
+    if(symbol === ''){
+        alert('Please enter a valid stock symbol.')
+        return;
+    }
     fetchStockData(symbol, timeOption);
 }
