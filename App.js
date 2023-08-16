@@ -139,8 +139,11 @@ window.addEventListener('load', loadFromLocalStorage);
 function showStockDetails(symbol, timeOption) {
     const modal = document.getElementById('modal');
     const stockDetailsElement = document.getElementById('stock-details');
-
+   
+   // Clear existing stock details content
+   stockDetailsElement.innerHTML = '';
     // Extract relevant data based on the selected time frame
+
     const timeSeriesKey = getTimeSeriesKey(timeOption);
     const latestData = fetchedData[timeSeriesKey][Object.keys(fetchedData[timeSeriesKey])[0]];
 
@@ -172,6 +175,7 @@ function showStockDetails(symbol, timeOption) {
 
     const stockDetails = document.createElement('div');
     stockDetails.classList.add('stock-details');
+
     stockDetails.innerHTML = `
     <div class="show-stocks">
         
@@ -189,16 +193,18 @@ function showStockDetails(symbol, timeOption) {
         </div>
     </div>
     `;
-
+    
     stockDetailsElement.appendChild(stockDetails);
     modal.style.display = 'block';
+
 }
 
 // Function to close the modal
 function closeModal() {
     const modal = document.getElementById('modal');
-    modal.style.display = 'none';
-    location.reload();
+        modal.style.display = 'none';
+        
+    // location.reload();
 }
 
 // Function to remove stock from the watchlist
@@ -213,6 +219,13 @@ function removeStock(symbol) {
         }
     }
 }
+// Adding an event listener to the input field for the "keydown" event
+const stockSymbolInput = document.getElementById('stock-symbol');
+stockSymbolInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+        searchStock();
+    }
+});
 
 // Function to handle the search button click
 function searchStock() {
@@ -223,4 +236,6 @@ function searchStock() {
         return;
     }
     fetchStockData(symbol, timeOption);
+    // Clear the input field after searching
+    symbol.value = '';
 }
